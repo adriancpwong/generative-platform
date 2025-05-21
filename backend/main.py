@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -12,17 +13,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello from FastAPI backend"}
+class ChatRequest(BaseModel):
+    message: str
 
-@app.get("/api/ai-response")
-async def get_ai_response():
+@app.post("/api/chat")
+async def chat_with_llm(request: ChatRequest):
     async with httpx.AsyncClient() as client:
-        # Call the AI service (running on 8001)
-        response = await client.get("http://test-service:8001/generate")
-        sample_response = {
-            "text": "This is AI-generated content from Service 1!"
-        }
-        return sample_response
-        #return response.json()
+        try:
+            response = await client.post(
+                "http://test-service:8001/chat",
+                json={"message": request.message, "max_new_tokens": 100},
+                timeout=30.0
+            )
+            return response.json()
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"LLM service error: {str(e)}")
+
+@app.get("/api/health")
+async def health_check():
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get("http://test-service:8001/health")
+            return response.json()
+        except httpx.RequestError:
+            return {"status": "unhealthy"}

@@ -5,20 +5,24 @@ services:
         build: ./frontend
         ports:
             - "3000:3000"
-        depends_on:
-            - backend
-        restart: unless-stopped
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
 
     backend:
         build: ./backend
         ports:
             - "8000:8000"
-        depends_on:
-            - test-service
-        restart: unless-stopped
+        volumes:
+            - ./backend:/app
 
     test-service:
         build: ./services/test-service
         ports:
             - "8001:8001"
-        restart: unless-stopped
+        environment:
+            - HF_HUB_DISABLE_TELEMETRY=1
+            - HF_HUB_OFFLINE=0
+        volumes:
+            - ~/.cache/huggingface:/root/.cache/huggingface # Cache models between runs
+            - ./services/test-service:/app
