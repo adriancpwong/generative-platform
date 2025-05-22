@@ -20,9 +20,19 @@ services:
         build: ./services/test-service
         ports:
             - "8001:8001"
-        environment:
-            - HF_HUB_DISABLE_TELEMETRY=1
-            - HF_HUB_OFFLINE=0
         volumes:
-            - ~/.cache/huggingface:/root/.cache/huggingface # Cache models between runs
-            - ./services/test-service:/app
+            - ./services/test-service/models:/app/models
+        environment:
+            - TRANSFORMERS_CACHE=/app/models
+            - HF_HOME=/app/models
+
+    # service-placeholder:
+    #     build: ./services/service-placeholder
+    #     ports:
+    #         - "8002:8002"
+    #     environment:
+    #         - HF_HUB_DISABLE_TELEMETRY=1
+    #         - HF_HUB_OFFLINE=0
+    #     volumes:
+    #         - ~/.cache/huggingface:/root/.cache/huggingface # Cache models between runs
+    #         - ./services/service-placeholder:/app

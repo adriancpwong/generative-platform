@@ -22,8 +22,8 @@ async def chat_with_llm(request: ChatRequest):
         try:
             response = await client.post(
                 "http://test-service:8001/chat",
-                json={"message": request.message, "max_new_tokens": 100},
-                timeout=30.0
+                json={"message": request.message, "max_new_tokens": 500},
+                timeout=3000.0
             )
             return response.json()
         except httpx.RequestError as e:

@@ -8,16 +8,13 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip first
-RUN pip install --upgrade pip
+# Copy models and code
+COPY models/ /app/models/
+COPY requirements.txt .
+COPY main.py .
 
 # Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Pre-download a small model for testing
-RUN python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('TinyLlama/TinyLlama-1.1B-Chat-v1.0')"
-
-COPY . .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]

@@ -102,3 +102,25 @@ ehthumbs.db
 $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,node,react,docker,vscode
+
+# Ignore Hugging Face model files
+**/models/
+**/.cache/
+**/*.bin
+**/*.safetensors
+**/*.h5
+**/*.pt
+**/*.pth
+**/*.msgpack
+**/*.onnx
+**/*.ot
+**/*.tflite
+**/*.ckpt
+**/pytorch_model*
+**/tf_model*
+**/flax_model*
+**/model.safetensors.index.json
+**/tokenizer.json
+**/tokenizer_config.json
+**/special_tokens_map.json
+**/generation_config.json

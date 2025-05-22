@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from pathlib import Path
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
@@ -7,26 +9,50 @@ app = FastAPI()
 
 # Use a smaller model optimized for CPU/Apple Silicon
 # MODEL_NAME = "HuggingFaceH4/zephyr-7b-beta"  # ~3GB download
-MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # ~500MB download
+# MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # ~500MB download
+
+# Configuration
+MODEL_DIR = os.getenv("MODEL_DIR", "/app/models")  # Default Docker path
+MODEL_NAME = os.getenv("MODEL_NAME", "zephyr")  # Default model
 
 # Configure for Apple Metal (MPS) if available
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 torch_dtype = torch.float32  # Use float32 on Apple Silicon
 
+def get_model_path(base_path: str) -> str:
+    """Resolve the actual model path in HuggingFace cache structure"""
+    # base_path = Path(base_path)
+    snapshots_dir = Path(base_path + "/snapshots/")
+
+    print(f"Checking for snapshots in: {snapshots_dir}")
+    
+    if snapshots_dir.exists():
+        print(f"Snapshots directory exists: {snapshots_dir}")
+        for snapshot in snapshots_dir.iterdir():
+            print(f"Found snapshot: {snapshot}")
+            if snapshot.is_dir():
+                print(f"Using snapshot: {snapshot}")
+                return str(snapshot)
+    return str(base_path)
+
 @app.on_event("startup")
 async def load_model():
     global tokenizer, model
-    print(f"Loading model on device: {device}")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    base_path = f"{MODEL_DIR}/{MODEL_NAME}"
+    model_path = get_model_path(base_path)
+    
+    print(f"Loading model from: {model_path}")
+    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME,
-        device_map=device,
-        torch_dtype=torch_dtype
+        model_path,
+        device_map="auto",
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+        local_files_only=True
     )
 
 class ChatRequest(BaseModel):
     message: str
-    max_new_tokens: int = 100
+    max_new_tokens: int = 500
 
 @app.post("/chat")
 async def chat_with_llm(request: ChatRequest):
@@ -46,3 +72,7 @@ async def chat_with_llm(request: ChatRequest):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
