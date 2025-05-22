@@ -16,12 +16,12 @@ services:
         volumes:
             - ./backend:/app
 
-    test-service:
-        build: ./services/test-service
+    local-llm-service:
+        build: ./services/local-llm-service
         ports:
             - "8001:8001"
         volumes:
-            - ./services/test-service/models:/app/models
+            - ./services/local-llm-service/models:/app/models
         environment:
             - TRANSFORMERS_CACHE=/app/models
             - HF_HOME=/app/models

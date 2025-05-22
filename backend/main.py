@@ -21,7 +21,7 @@ async def chat_with_llm(request: ChatRequest):
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                "http://test-service:8001/chat",
+                "http://local-llm-service:8001/chat",
                 json={"message": request.message, "max_new_tokens": 500},
                 timeout=3000.0
             )
@@ -33,7 +33,7 @@ async def chat_with_llm(request: ChatRequest):
 async def health_check():
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get("http://test-service:8001/health")
+            response = await client.get("http://local-llm-service:8001/health")
             return response.json()
         except httpx.RequestError:
             return {"status": "unhealthy"}
