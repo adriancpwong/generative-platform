@@ -9,22 +9,22 @@ services:
             - ./frontend:/app
             - /app/node_modules
 
-    backend:
-        build: ./backend
-        ports:
-            - "8000:8000"
-        volumes:
-            - ./backend:/app
+    # backend:
+    #     build: ./backend
+    #     ports:
+    #         - "8000:8000"
+    #     volumes:
+    #         - ./backend:/app
 
-    local-llm-service:
-        build: ./services/local-llm-service
-        ports:
-            - "8001:8001"
-        volumes:
-            - ./services/local-llm-service/models:/app/models
-        environment:
-            - TRANSFORMERS_CACHE=/app/models
-            - HF_HOME=/app/models
+    # local-llm-service:
+    #     build: ./services/local-llm-service
+    #     ports:
+    #         - "8001:8001"
+    #     volumes:
+    #         - ./services/local-llm-service/models:/app/models
+    #     environment:
+    #         - TRANSFORMERS_CACHE=/app/models
+    #         - HF_HOME=/app/models
 
     # service-placeholder:
     #     build: ./services/service-placeholder
