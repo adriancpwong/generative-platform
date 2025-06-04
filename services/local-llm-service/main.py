@@ -7,13 +7,9 @@ import torch
 
 app = FastAPI()
 
-# Use a smaller model optimized for CPU/Apple Silicon
-# MODEL_NAME = "HuggingFaceH4/zephyr-7b-beta"  # ~3GB download
-# MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # ~500MB download
-
 # Configuration
 MODEL_DIR = os.getenv("MODEL_DIR", "/app/models")  # Default Docker path
-MODEL_NAME = os.getenv("MODEL_NAME", "zephyr")  # Default model
+MODEL_NAME = os.getenv("MODEL_NAME", "tinyllama")  # Default model
 
 # Configure for Apple Metal (MPS) if available
 device = "mps" if torch.backends.mps.is_available() else "cpu"

@@ -49,33 +49,33 @@ function App() {
     };
 
     return (
-        // <div className="chat-container">
-        //     <h1>LLM Chat Interface</h1>
+        <div className="chat-container">
+            <h1>LLM Chat Interface</h1>
 
-        //     <div className="chat-window">
-        //         {messages.map((msg, index) => (
-        //             <div key={index} className={`message ${msg.sender}`}>
-        //                 {msg.text}
-        //             </div>
-        //         ))}
-        //         {loading && <div className="message ai">Thinking...</div>}
-        //     </div>
+            <div className="chat-window">
+                {messages.map((msg, index) => (
+                    <div key={index} className={`message ${msg.sender}`}>
+                        {msg.text}
+                    </div>
+                ))}
+                {loading && <div className="message ai">Thinking...</div>}
+            </div>
 
-        //     <div className="input-area">
-        //         <input
-        //             type="text"
-        //             value={input}
-        //             onChange={(e) => setInput(e.target.value)}
-        //             onKeyPress={(e) => e.key === "Enter" && handleSend()}
-        //             disabled={loading}
-        //             placeholder="Type your message..."
-        //         />
-        //         <button onClick={handleSend} disabled={loading}>
-        //             {loading ? "Sending..." : "Send"}
-        //         </button>
-        //     </div>
-        // </div>
-        <Jarvis />
+            <div className="input-area">
+                <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                    disabled={loading}
+                    placeholder="Type your message..."
+                />
+                <button onClick={handleSend} disabled={loading}>
+                    {loading ? "Sending..." : "Send"}
+                </button>
+            </div>
+        </div>
+        // <Jarvis />
     );
 }
 
