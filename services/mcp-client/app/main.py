@@ -1,20 +1,31 @@
 from fastapi import FastAPI, HTTPException
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import httpx
 import logging
-from schemas import MCPMessage
+from datetime import datetime
+from pydantic import BaseModel
+
+class MCPMessage(BaseModel):
+    sender: str
+    receiver: str
+    message_type: str  # "request", "response", "acknowledge", "search", etc.
+    status: Optional[str] = "pending"
+    protocol: str = "MCP-v1"
+    body: Dict[str, Any]  # Flexible payload
+    metadata: Optional[Dict[str, Any]] = None  # For routing/instructions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mcp-service")
+logger = logging.getLogger("mcp-client")
 
 app = FastAPI(title="MCP Router")
 
-# Service registry (maps service names to their Docker network URLs and ports)
+# Expanded service registry (now includes searxng-api)
 SERVICE_REGISTRY = {
     "frontend": {"host": "frontend", "port": 3000},
     "backend": {"host": "backend", "port": 8000},
-    "local-llm-service": {"host": "local-llm-service", "port": 8001}
+    "local-llm-service": {"host": "local-llm-service", "port": 8001},
+    "searxng-api": {"host": "searxng-api", "port": 5000}  # New service
 }
 
 # In-memory message store (replace with Redis in production)
@@ -23,18 +34,16 @@ message_log = []
 async def forward_message(message: MCPMessage):
     """Forward validated MCP messages to their destination service."""
     try:
-        # Lookup receiver in service registry
         receiver_service = SERVICE_REGISTRY.get(message.receiver)
         if not receiver_service:
             raise HTTPException(status_code=400, detail=f"Unknown receiver: {message.receiver}")
 
-        # Prepare HTTP call
         url = f"http://{receiver_service['host']}:{receiver_service['port']}/receive-mcp"
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 url,
                 json=message.dict(),
-                timeout=10.0  # Fail fast
+                timeout=10.0
             )
             response.raise_for_status()
             
@@ -51,25 +60,47 @@ async def send_messages(messages: List[MCPMessage]):
     results = []
     for msg in messages:
         try:
-            # Validate message structure (Pydantic does this automatically)
             validated_msg = MCPMessage(**msg.dict())
             
-            # Add metadata if missing
             if not validated_msg.metadata:
                 validated_msg.metadata = {
                     "hops": [validated_msg.sender],
                     "timestamp": datetime.utcnow().isoformat()
                 }
             
-            # Forward and log
             result = await forward_message(validated_msg)
             message_log.append(validated_msg.dict())
-            results.append({"status": "success", "message_id": len(message_log), "receiver_response": result})
+            results.append({
+                "status": "success", 
+                "message_id": len(message_log), 
+                "receiver_response": result
+            })
             
         except Exception as e:
-            results.append({"status": "error", "error": str(e), "message": msg.dict()})
+            results.append({
+                "status": "error", 
+                "error": str(e), 
+                "message": msg.dict()
+            })
     
     return {"results": results}
+
+@app.post("/mcp/execute-search")
+async def execute_search(query: Dict[str, Any]):
+    """Direct search endpoint for SearXNG API (bypasses MCP messaging)"""
+    try:
+        searxng_service = SERVICE_REGISTRY["searxng-api"]
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"http://{searxng_service['host']}:{searxng_service['port']}/search",
+                json=query,
+                timeout=15.0  # Longer timeout for searches
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        logger.error(f"Search failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/mcp/log")
 async def get_log():

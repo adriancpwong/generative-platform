@@ -1,0 +1,12 @@
+search:
+    engines:
+        - name: google
+          disabled: false
+        - name: bing
+          disabled: false
+        - name: duckduckgo
+          disabled: false
+ui:
+    theme: simple # Dark theme: "dark"
+server:
+    secret_key: "your-secret-key-here" # Must match docker-compose.yml

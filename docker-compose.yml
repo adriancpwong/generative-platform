@@ -26,12 +26,34 @@ services:
             - TRANSFORMERS_CACHE=/app/models
             - HF_HOME=/app/models
 
-    mcp-service:
-        build: ./services/mcp-service
+    mcp-client:
+        build: ./services/mcp-client
         ports:
-            - "8003:8003" # Expose MCP service
+            - "8003:8003"
         volumes:
-            - ./services/mcp-service:/app
+            - ./services/mcp-client:/app
+        depends_on:
+            - searxng-api # Ensure API is ready
+
+    # SearXNG metasearch engine
+    searxng:
+        image: searxng/searxng:latest
+        container_name: searxng
+        ports:
+            - "8080:8080" # Web UI (optional)
+        environment:
+            - SEARXNG_BIND_ADDRESS=0.0.0.0
+            - SEARXNG_SECRET_KEY=change_this_to_a_random_string
+        volumes:
+            - ./services/searxng:/etc/searxng # Persistent config
+
+    # Custom API wrapper for SearXNG
+    searxng-api:
+        build: ./services/searxng-api
+        ports:
+            - "5000:5000" # Expose API to host
+        depends_on:
+            - searxng # Wait for SearXNG
 
     # service-placeholder:
     #     build: ./services/service-placeholder
@@ -43,3 +65,7 @@ services:
     #     volumes:
     #         - ~/.cache/huggingface:/root/.cache/huggingface # Cache models between runs
     #         - ./services/service-placeholder:/app
+
+networks:
+    default:
+        driver: bridge

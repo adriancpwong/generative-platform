@@ -20,7 +20,7 @@ import httpx
 async def send_to_mcp_service(messages):
 async with httpx.AsyncClient() as client:
 response = await client.post(
-"http://mcp-service:8003/mcp/send",
+"http://mcp-client:8003/mcp/send",
 json=messages
 )
 return response.json()
