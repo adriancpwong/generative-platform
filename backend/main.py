@@ -16,6 +16,11 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str
 
+
+# @app.on_event("startup")
+# async def startup():
+#     await init_db(engine)
+
 @app.post("/api/chat")
 async def chat_with_llm(request: ChatRequest):
     async with httpx.AsyncClient() as client:
