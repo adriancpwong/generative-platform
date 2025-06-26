@@ -1,0 +1,32 @@
+{
+    "services": [
+        {
+            "name": "Local LLM",
+            "id": "local-llm-service",
+            "port": 8001,
+            "path": "/chat",
+            "description": "Chat with local language model"
+        },
+        {
+            "name": "Email Servcie",
+            "id": "email-service",
+            "port": 8002,
+            "path": "/email",
+            "description": "Email automation"
+        },
+        {
+            "name": "Read Write Service",
+            "id": "read-write-service",
+            "port": 8003,
+            "path": "/read-write",
+            "description": "Read and write files"
+        },
+        {
+            "name": "Web Scraper",
+            "id": "web-scraper-service",
+            "port": 8004,
+            "path": "/scrape",
+            "description": "Web scraping service"
+        }
+    ]
+}

@@ -1,126 +1,23 @@
 version: "3.8"
 
 services:
-    # db:
-    #     image: postgres:15
-    #     container_name: postgres
-    #     environment:
-    #         POSTGRES_USER: your_user
-    #         POSTGRES_PASSWORD: your_password
-    #         POSTGRES_DB: your_db
-    #     volumes:
-    #         - ./services/postgres/data:/var/lib/postgresql/data # Persistent storage
-    #     ports:
-    #         - "5432:5432"
-    #     healthcheck:
-    #         test: ["CMD-SHELL", "pg_isready -U your_user -d your_db"]
-    #         interval: 5s
-    #         timeout: 5s
-    #         retries: 5
-
     frontend:
-        build: ./frontend
+        build: ./Frontend
         ports:
             - "3000:3000"
+        environment:
+            - NODE_ENV=development
+        depends_on:
+            - backend
         volumes:
-            - ./frontend:/app
+            - ./Frontend:/app
             - /app/node_modules
 
     backend:
-        build: ./backend
+        build: ./Backend
         ports:
             - "8000:8000"
-        # environment:
-        #     DATABASE_URL: "postgresql://your_user:your_password@db:5432/your_db"
-        # depends_on:
-        #     db:
-        #         condition: service_healthy
         volumes:
-            - ./backend:/app
-
-    local-llm-service:
-        build: ./services/local-llm-service
-        ports:
-            - "8001:8001"
-        volumes:
-            - ./services/local-llm-service/models:/app/models
+            - ./Backend/app:/app
         environment:
-            - TRANSFORMERS_CACHE=/app/models
-            - HF_HOME=/app/models
-
-    mcp-client:
-        build: ./services/mcp-client
-        ports:
-            - "8003:8003"
-        volumes:
-            - ./services/mcp-client:/app
-        depends_on:
-            - searxng-api # Ensure API is ready
-
-    # SearXNG metasearch engine
-    searxng:
-        image: searxng/searxng:latest
-        container_name: searxng
-        ports:
-            - "8080:8080" # Web UI (optional)
-        environment:
-            - SEARXNG_BIND_ADDRESS=0.0.0.0
-            - SEARXNG_SECRET_KEY=change_this_to_a_random_string
-        volumes:
-            - ./services/searxng:/etc/searxng # Persistent config
-
-    # Custom API wrapper for SearXNG
-    searxng-api:
-        build: ./services/searxng-api
-        ports:
-            - "5000:5000" # Expose API to host
-        depends_on:
-            - searxng # Wait for SearXNG
-
-    langchain-service:
-        build: ./services/langchain-service
-        ports:
-            - "8100:8100"
-        environment:
-            - LLM_SERVICE_URL=http://local-llm-service:8001
-            - OPENAI_API_BASE=http://local-llm-service:8001 # For LangChain compatibility
-        depends_on:
-            - local-llm-service
-        networks:
-            - default
-
-    n8n:
-        image: n8nio/n8n:latest
-        container_name: n8n
-        restart: unless-stopped
-        ports:
-            - "5678:5678" # n8n default port
-        environment:
-            - N8N_BASE_URL=http://localhost:5678 # For proper webhook URLs
-            - N8N_HOST=0.0.0.0
-            - N8N_PROTOCOL=http
-            - N8N_EDITOR_BASE_URL=http://localhost:5678 # For UI links
-            - N8N_GENERIC_TIMEZONE=UTC
-            # Optional auth (recommended):
-            - N8N_BASIC_AUTH_ACTIVE=true
-            - N8N_BASIC_AUTH_USER=admin
-            - N8N_BASIC_AUTH_PASSWORD=your_secure_password
-        volumes:
-            - ./services/n8n/data:/home/node/.n8n # Persistent workflows
-        networks:
-            - default # Connect to your app's network
-
-    # service-placeholder:
-    #     build: ./services/service-placeholder
-    #     ports:
-    #         - "8002:8002"
-    #     environment:
-    #         - HF_HUB_DISABLE_TELEMETRY=1
-    #         - HF_HUB_OFFLINE=0
-    #     volumes:
-    #         - ~/.cache/huggingface:/root/.cache/huggingface # Cache models between runs
-    #         - ./services/service-placeholder:/app
-
-networks:
-    default:
-        driver: bridge
+            - FLASK_ENV=development
